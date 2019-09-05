@@ -1,15 +1,24 @@
 #!/bin/bash
-# статистика волонетров на забегах паркран Королев
+# статистика волонетров на забегах паркран
+
+# если скрипт запускается без параметров, то считается статистика паркрана Королёв
+# если задан параметр командной строки, то он используется в качестве имени забега
+# имя паркрана можно посмотреть в адресной строке домашней страницы забега
+# например для Вернадского (https://www.parkrun.ru/vernadskogo/) это vernadskogo  
+# для Коломенского kolomenskoe, для Измайлово izmailovo и т.д. 
 
 parkrun='korolev'
-total=100
-declare -A countMap
+if [[ -n "$1" ]]; then
+	parkrun=$1
+fi
 
+declare -A countMap
 
 result_page='https://www.parkrun.ru/'$parkrun'/results/weeklyresults/?runSeqNumber='
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
-totalresult='korolev_results.html'
+total=`curl -s -A "$user_agent" $result_page | awk -F"Проведено забегов: " '{print $2}' | awk -F"</div>" '{print $1}'`
 
+echo "Паркран "$parkrun". Всего забегов: "$total
 
 for(( event_index=1; event_index<=$total; event_index++ ))
 do
@@ -19,8 +28,9 @@ do
 	page=`curl -s -A "$user_agent" $page_url`
 
 	# сохранение в файл ( на всякий случай )
-	filename="result"$event_index
-	echo $page > $filename
+	#filename="result"$event_index
+	#echo $page > $filename
+	totalresult=$parkrun'all_results.html'
 	echo $page >> $totalresult
 	
 	Volunteers=`echo $page | awk -F"благодаря которым состоялся этот забег:" '{print $2}' | awk -F"</p>" '{print $1}'`
@@ -41,6 +51,11 @@ do
 	sleep 1
 done
 
-echo "================== Волонтеры забега =================="
+#вывод списка волонтеров с сортировкой по количеству забегов
+echo "================== Волонтеры забега "$parkrun" =================="
 for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4
- 
+
+#вывод списка волонтеров в файл
+volunteers_file='volunteers_'$parkrun'.txt'
+for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4 >> $volunteers_file
+
