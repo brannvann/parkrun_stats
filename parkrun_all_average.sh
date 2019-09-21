@@ -1,6 +1,5 @@
 #!/bin/bash
-# статистика волонетров на всех забегах parkrun russia
-# выкачивает все, работает долго!
+# результаты и статистика волонтеров на прошедших забегах parkrun russia
 
 events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpobedy
  bitsa butovo cheboksarynaberezhnaya chelyabinsk chelyabinskekopark chertanovopokrovskypark
@@ -17,25 +16,10 @@ events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpob
  voronezhcentralpark yakutskdokhsun zatyumensky zelenograd zhukovsky
  kurgancentralpark
 )
-		  
-short_events=(chelyabinskekopark zatyumensky orskparkstroiteley)		  
-		  
-russia_full_stat='russia_full_stat.txt'
-echo -n > $russia_full_stat		  
-
-volunteers_russia='volunteers_russia.txt'
-echo -n > $volunteers_russia
-		  
+	
 d=$(dirname $0)
-
-#for parkrun in "${short_events[@]}"; 
 for parkrun in "${events[@]}";
 do
-	event_full_stat=$parkrun'_full_stat.txt'
-	event_volunteers='volunteers_'$parkrun'.txt'
-	
-	. ${d}/prun_stat.sh $parkrun
-	
-	cat $event_full_stat >> $russia_full_stat
-	cat $event_volunteers >> $volunteers_russia
+	. ${d}/parkrun_average_runners.sh $parkrun
 done
+

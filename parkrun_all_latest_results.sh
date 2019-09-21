@@ -14,28 +14,36 @@ events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpob
  shuvalovskypark sokolniki sosnovka stavropol tambov timiryazevsky tsaritsyno 
  tulacentral ufabotanicheskysad velikiynovgorodkremlevsky vernadskogo volgogradpanorama
  voronezhcentralpark yakutskdokhsun zatyumensky zelenograd zhukovsky
- kurgancentralpark
+ kurgancentralpark staryesady
 )
+
+work_dir=$(dirname $0)
+
+result_dir='latest'
+if [[ -n "$1" ]]; then
+	result_dir="$1"
+fi
+
+if [[ ! -d "$result_dir" ]]; then
+	echo "cоздаем" "$result_dir"
+	mkdir "$result_dir"
+fi
+cd "$result_dir"
 	
-short_events=(chelyabinskekopark zatyumensky orskparkstroiteley)		  
-		  
-russia_latest_results='russia_latest_results.html'
-echo -n > $russia_latest_results		  
+russia_latest_results='_russia_latest_results.html'
+echo -n > "$russia_latest_results"		  
 
-russia_latest_volunteers='russia_latest_volunteers.txt'
-echo -n > $russia_latest_volunteers
-		  
-d=$(dirname $0)
+russia_latest_volunteers='_russia_latest_volunteers.txt'
+echo -n > "$russia_latest_volunteers"
 
-#for parkrun in "${short_events[@]}"; 
 for parkrun in "${events[@]}";
 do
 	event_latest_results=$parkrun'_latest_results.html'
 	event_latest_volunteers=$parkrun'_latest_volunteers.txt'
 	
-	. ${d}/parkrun_latest_results.sh $parkrun
+	.${work_dir}/parkrun_latest_results.sh "$parkrun"
 	
-	cat $event_latest_results >> $russia_latest_results
-	cat $event_latest_volunteers >> $russia_latest_volunteers
+	cat "$event_latest_results" >> "$russia_latest_results"
+	cat "$event_latest_volunteers" >> "$russia_latest_volunteers"
 done
 

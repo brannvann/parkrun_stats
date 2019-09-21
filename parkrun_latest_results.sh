@@ -11,7 +11,7 @@ if [[ -n "$1" ]]; then
 	parkrun=$1
 fi
 
-result_page='https://www.parkrun.ru/'$parkrun'/results/latestresults'
+result_page='https://www.parkrun.ru/'$parkrun'/results/latestresults/'
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
 last_event=`curl -s -A "$user_agent" $result_page | awk -F"Проведено забегов: " '{print $2}' | awk -F"</div>" '{print $1}'`
 
