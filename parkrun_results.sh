@@ -55,21 +55,45 @@ do
 	event_volunteers[$event_number]=$event_volunteers
 done
 
-for(( event_index=1; event_index<=$total_events; event_index++ ))
+#for(( event_index=1; event_index<=$total_events; event_index++ ))
+for(( event_index=$total_events; event_index<=$total_events; event_index++ ))
 do
 	page_url=$result_page$event_index
 	echo "обработка " $page_url
-	
-	echo $parkrun" "$event_index" "${event2date[$event_index]}" "${event2runners[$event_index]}" "${event_volunteers[$event_index]}
-
 	#event_src=`curl -s -A "$user_agent" $page_url`
-
-	result_table=`echo $event_src | awk -F"<tbody class=\"js-ResultsTbody\">" '{print $2}'`
-	echo $result_table > res.txt
 	
-	sleep 1
+	eventdate=${event2date[$event_index]}
+	eventrunners=${event2runners[$event_index]}
+	eventvolunteers=${event_volunteers[$event_index]}
+
+	echo $parkrun" "$event_index" "$eventdate" "$eventrunners" "$eventvolunteers
+
+	for(( runner=1;runner<=$eventrunners; runner++))
+	do
+		runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
+		#echo $runner_tag
+		runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
+		runner_id=`echo $runner_raw | awk -F"?athleteNumber=" '{print $2}' | awk -F"\"" '{print $1}'`
+		if [ -n "$runner_id" ]
+		then
+			runner_name=`echo $runner_raw | awk -F"target=\"_top\">" '{print $2}' | awk -F"</a>" '{print $1}'`
+			runner_time=`echo $runner_raw | awk -F"Results-table-td--time" '{print $2}' | awk -F">" '{print $3}' | awk -F"<" '{print $1}'`
+			gender=`echo $runner_raw | awk -F"gender Results-table-td--" '{print $2}' | awk -F"\"" '{print $1}'`
+			gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
+			age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
+			age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
+			echo -e $runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos"\t"$age_group"\t"$age_grade
+		else
+			echo -e $runner"\tНЕИЗВЕСТНЫЙ"
+		fi
+		
+	done 
+	
+	sleep 10
+	exit 0
 
 done
+
 
 
 
