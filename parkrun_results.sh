@@ -19,15 +19,16 @@ history_page='https://www.parkrun.ru/'$parkrun'/results/eventhistory/'
 result_page='https://www.parkrun.ru/'$parkrun'/results/weeklyresults/?runSeqNumber='
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
 
-#history_src=`curl -s -A "$user_agent" $history_page`
-#sleep 1
-#event_src=`curl -s -A "$user_agent" $result_page`
-#echo $history_src > $history_tmp
-#echo $event_src > $event_tmp
-#exit 0
+history_src=`curl -s -A "$user_agent" $history_page`
+sleep 1
+event_src=`curl -s -A "$user_agent" $result_page`
 
-event_src=`cat $event_tmp`
-history_src=`cat $history_tmp`
+echo $history_src > $history_tmp
+echo $event_src > $event_tmp
+
+#exit 0
+#event_src=`cat $event_tmp`
+#history_src=`cat $history_tmp`
 
 futer=`echo $history_src | awk -F"<div id=\"FooterStats\">" '{print $2}' | awk -F"<div class=\"column socialicons\">" '{print $1}'`
 total_events=`echo $futer | awk -F"<div class=\"column\">" '{print $2}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
@@ -57,19 +58,25 @@ do
 	event_volunteers[$event_number]=$event_volunteers
 done
 
-#for(( event_index=1; event_index<=$total_events; event_index++ ))
-for(( event_index=$total_events-3; event_index<=$total_events; event_index++ ))
+result_file=$parkrun"_resuls.txt"
+volunteer_file=$parkrun"_volunteers.txt"
+
+#for(( event_index=$total_events-3; event_index<=$total_events; event_index++ ))
+for(( event_index=1; event_index<=$total_events; event_index++ ))
 do
+	eventdate=${event2date[$event_index]}
+	if grep -q $eventdate $result_file; 
+	then
+		echo $parkrun" "$event_index" уже обработан" 
+		continue
+	fi
+
 	page_url=$result_page$event_index
 	echo "обработка " $page_url
 	event_src=`curl -s -A "$user_agent" $page_url`
-	
-	eventdate=${event2date[$event_index]}
+
 	eventrunners=${event2runners[$event_index]}
-	eventvolunteers=${event_volunteers[$event_index]}
-
-	echo $parkrun" "$event_index" "$eventdate" "$eventrunners" "$eventvolunteers
-
+	#echo $parkrun" "$event_index" "$eventdate" "$eventrunners" "$eventvolunteers
 	for(( runner=1;runner<=$eventrunners; runner++))
 	do
 		runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
@@ -105,23 +112,24 @@ do
 			output_text=$output_text"\t"$runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos
 			output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
 			echo -e $output_text
-			
-			#echo -e $runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos"\t"$age_group"\t"$age_grade"\t"$record
-		
+			echo -e $output_text >> "$result_file"
 		else
 			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ"
+			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ" >> "$result_file"
 		fi
 		
 	done 
 	
 	volunteer_block=`echo $event_src | awk -F"../../volunteer" '{ print $1}' | awk -F"</h3>" '{print $NF}' | awk -F":" '{print $2}'`
-	echo $volunteer_block
+	#echo $volunteer_block
+	eventvolunteers=${event_volunteers[$event_index]}
 	for(( v=1; v<=$eventvolunteers; v++ ))
 	do
 		Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         
 		athleteId=`echo $Volunteer | awk -F"Number=" '{print $2}' | awk -F"'>" '{print $1}'`
 		Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
 		echo -e $eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
+		echo -e $eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name  >> "$volunteer_file"
 	done
 	
 	sleep 1
