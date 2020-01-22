@@ -82,7 +82,24 @@ do
 			gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
 			age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
 			age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
-			echo -e $runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos"\t"$age_group"\t"$age_grade
+			record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
+			if [ -z "$record" ]
+			then
+				record=`echo $runner_raw | grep "Первый забег!</span>"`
+				if [ -n "$record" ]
+				then
+					record="Первый забег!"
+				else 
+					record=`echo $runner_raw | grep "Новый ЛР!</span>"`
+					if [ -n "$record" ]
+					then
+						record="Новый ЛР!"
+					fi
+				fi
+			fi
+			
+			echo -e $runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos"\t"$age_group"\t"$age_grade"\t"$record
+		
 		else
 			echo -e $runner"\tНЕИЗВЕСТНЫЙ"
 		fi
