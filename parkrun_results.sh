@@ -24,6 +24,8 @@ user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Fi
 #event_src=`curl -s -A "$user_agent" $result_page`
 #echo $history_src > $history_tmp
 #echo $event_src > $event_tmp
+#exit 0
+
 event_src=`cat $event_tmp`
 history_src=`cat $history_tmp`
 
@@ -56,11 +58,11 @@ do
 done
 
 #for(( event_index=1; event_index<=$total_events; event_index++ ))
-for(( event_index=$total_events; event_index<=$total_events; event_index++ ))
+for(( event_index=$total_events-3; event_index<=$total_events; event_index++ ))
 do
 	page_url=$result_page$event_index
 	echo "обработка " $page_url
-	#event_src=`curl -s -A "$user_agent" $page_url`
+	event_src=`curl -s -A "$user_agent" $page_url`
 	
 	eventdate=${event2date[$event_index]}
 	eventrunners=${event2runners[$event_index]}
@@ -97,74 +99,31 @@ do
 					fi
 				fi
 			fi
+			runs_count=`echo $runner_raw | awk -F"<span class=\"Results-tablet" '{print $1}' | awk -F">" '{print $NF}' | awk -F" " '{print $1}'`
 			
-			echo -e $runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos"\t"$age_group"\t"$age_grade"\t"$record
+			output_text=$eventdate"\t"$parkrun"\t"$event_index
+			output_text=$output_text"\t"$runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos
+			output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
+			echo -e $output_text
+			
+			#echo -e $runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos"\t"$age_group"\t"$age_grade"\t"$record
 		
 		else
-			echo -e $runner"\tНЕИЗВЕСТНЫЙ"
+			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ"
 		fi
 		
 	done 
 	
-	sleep 10
-	exit 0
-
-done
-
-
-
-
-exit 0
-
-
-
-
-
-
-
-
-
-
- сюда сохраняются все страницы с результатами забега  (korolev_all_results.html) 
-totalresult=$parkrun'_all_results.html'
-echo -n > $totalresult
-
-# подробная статистика волонетров по забегу
-full_stat=$parkrun'_full_stat.txt'
-echo -n > $full_stat
-
-for(( event_index=1; event_index<=$total; event_index++ ))
-do
-	# скачиваем содержимое страницы с результатами забега 
-	page_url=$result_page$event_index
-	echo "обработка" $page_url
-	page=`curl -s -A "$user_agent" $page_url`
-
-	# сохранение результатов забега в файл ( на всякий случай )
-	echo $page >> $totalresult
-	
-	Volunteers=`echo $page | awk -F"благодаря которым состоялся этот забег:" '{print $2}' | awk -F"</p>" '{print $1}'`
-	vCount=`echo $Volunteers | awk -F"</a>," '{print NF}'`
-	echo "забег №" $event_index "количество волонтеров:" $vCount
-	for(( i=1; i<=$vCount; ++i ))
+	volunteer_block=`echo $event_src | awk -F"../../volunteer" '{ print $1}' | awk -F"</h3>" '{print $NF}' | awk -F":" '{print $2}'`
+	echo $volunteer_block
+	for(( v=1; v<=$eventvolunteers; v++ ))
 	do
-		Volunteer=`echo $Volunteers | awk -F"</a>," '{print $'"$i"'}'`         
+		Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         
 		athleteId=`echo $Volunteer | awk -F"Number=" '{print $2}' | awk -F"'>" '{print $1}'`
 		Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
-		key="A"$athleteId" "$Name
-		echo -e $parkrun "\t" $event_index "\t" $key >> $full_stat 
-		
-		value=${countMap[$key]}
-		value=$(expr $value + 1)
-		countMap[$key]=$value
-	done	
+		echo -e $eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
+	done
+	
 	sleep 1
+
 done
-
-#вывод списка волонтеров с сортировкой по количеству забегов
-echo "================== Волонтеры забега "$parkrun" =================="
-for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4
-
-#вывод списка волонтеров в файл
-volunteers_file='volunteers_'$parkrun'.txt'
-for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4 >> $volunteers_file
