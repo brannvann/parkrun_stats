@@ -37,7 +37,7 @@ echo "Паркран "$parkrun". Всего забегов: "$total_events" Вс
 
 event_table=`echo $history_src | awk -F"<div id=\"primary\">" '{print $2}' | awk -F"<tbody>" '{print $2}' | awk -F"</tbody>" '{print $1}'`
 event_count=`echo $event_table | awk -F"<tr><td>" '{print NF}'`
-echo "Забегов в таблице истории "$event_count
+#echo "Забегов в таблице истории "$event_count
 
 declare -A event2date
 declare -A event2runners
@@ -58,7 +58,7 @@ do
 	event_volunteers[$event_number]=$event_volunteers
 done
 
-result_file=$parkrun"_resuls.txt"
+result_file=$parkrun"_results.txt"
 latest_result_file=$parkrun"_latest.txt"
 volunteer_file=$parkrun"_volunteers.txt"
 latest_volunteer_file=$parkrun"_latest_volunteers.txt"
