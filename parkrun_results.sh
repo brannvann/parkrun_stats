@@ -59,7 +59,9 @@ do
 done
 
 result_file=$parkrun"_resuls.txt"
+latest_result_file=$parkrun"_latest.txt"
 volunteer_file=$parkrun"_volunteers.txt"
+latest_volunteer_file=$parkrun"_latest_volunteers.txt"
 
 #for(( event_index=$total_events-3; event_index<=$total_events; event_index++ ))
 for(( event_index=1; event_index<=$total_events; event_index++ ))
@@ -69,6 +71,12 @@ do
 	then
 		echo $parkrun" "$event_index" уже обработан" 
 		continue
+	fi
+	
+	if [ "$event_index" -eq "$total_events" ]
+	then
+		echo -n > "$latest_result_file"
+		echo -n > "$latest_volunteer_file"
 	fi
 
 	page_url=$result_page$event_index
@@ -113,6 +121,10 @@ do
 			output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
 			echo -e $output_text
 			echo -e $output_text >> "$result_file"
+			if [ "$event_index" -eq "$total_events" ]
+			then
+				echo -e $output_text >> "$latest_result_file"
+			fi
 		else
 			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ"
 			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ" >> "$result_file"
@@ -128,8 +140,13 @@ do
 		Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         
 		athleteId=`echo $Volunteer | awk -F"Number=" '{print $2}' | awk -F"'>" '{print $1}'`
 		Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
-		echo -e $eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
-		echo -e $eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name  >> "$volunteer_file"
+		output_text=$eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
+		echo -e $output_text
+		echo -e $output_text  >> "$volunteer_file"
+		if [ "$event_index" -eq "$total_events" ]
+		then
+			echo -e $output_text >> "$latest_volunteer_file"
+		fi
 	done
 	
 	sleep 1
