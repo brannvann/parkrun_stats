@@ -23,10 +23,9 @@ history_src=`curl -s -A "$user_agent" $history_page`
 sleep 1
 event_src=`curl -s -A "$user_agent" $result_page`
 
-echo $history_src > $history_tmp
-echo $event_src > $event_tmp
+#echo $history_src > $history_tmp
+#echo $event_src > $event_tmp
 
-#exit 0
 #event_src=`cat $event_tmp`
 #history_src=`cat $history_tmp`
 
