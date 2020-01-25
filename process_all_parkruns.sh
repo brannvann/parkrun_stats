@@ -2,7 +2,7 @@
 # результаты и статистика волонтеров на прошедших забегах parkrun russia
 
 events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpobedy
- bitsa butovo cheboksarynaberezhnaya chelyabinsk chelyabinskekopark chertanovopokrovskypark
+  cheboksarynaberezhnaya chelyabinsk chelyabinskekopark chertanovopokrovskypark
  dolgoprudny druzhba ekaterinburgzelenayaroscha elaginostrov gatchinaprioratsky
  gorkypark izmailovo kazancentral khimki kimry kolchuginocitypark kolomenskoe
  kolpino korolev krasnoyarsknaberezhnaya krylatskoe 
@@ -15,7 +15,7 @@ events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpob
  tulacentral ufabotanicheskysad velikiynovgorodkremlevsky vernadskogo volgogradpanorama
  voronezhcentralpark yakutskdokhsun zatyumensky zelenograd zhukovsky
  kurgancentralpark staryesady tomskstadionpolytechnic lesoparkseverny solnechnyostrov
- skverdzerzhinskogo noginskgorodskoypark
+ skverdzerzhinskogo noginskgorodskoypark bitsa butovo
 )
 
 work_dir=$(dirname $0)
@@ -59,25 +59,21 @@ do
 		if grep -q "^$last_date" $event_latest_results; 
 		then
 			echo "результаты для "$parkrun" уже загружены"
-			let "is_last_results = 1"
+			is_last_results=1
 		fi
 		if grep -q "^$last_date" $event_latest_volunteers; 
 		then
 			echo "волонтеры для "$parkrun" уже загружены"
-			let "is_last_volunteers = 1"
+			is_last_volunteers=1
 		fi
 	fi
-	#echo "is_last_results = "$is_last_results
-	#echo "is_last_volunteers = "$is_last_volunteers
 	
-	if [[ "0" == "$is_last_results" || 0 == "$is_last_volunteers" ]]; then
+	if [[ "0" == "$is_last_results" || "0" == "$is_last_volunteers" ]]; then
 		.${work_dir}/parkrun_results.sh "$parkrun"
 	fi
 	
 	cat "$event_all_results" >> "$russia_all_results"
 	cat "$event_all_volunteers" >> "$russia_all_volunteers"
-	cat "$event_latest_results" >> "$russia_latest_results"
-	cat "$event_latest_volunteers" >> "$russia_latest_volunteers"
 	
 	if [ -n "$last_date" ]	
 	then
@@ -85,16 +81,18 @@ do
 		if grep -q "^$last_date" $event_latest_results; 
 		then
 			echo "последние результаты "$parkrun" ("$last_date") обработаны"
+			cat "$event_latest_results" >> "$russia_latest_results"
 		else  
 			echo "последних результатов "$parkrun" ("$last_date") еще нет!"
-			missing_evetns=$missing_evetns"\n"$parkrun
+			missing_evetns=$missing_evetns" "$parkrun
 		fi
 		if grep -q "^$last_date" $event_latest_volunteers; 
 		then
 			echo "волонтеры последнего забега "$parkrun" ("$last_date") обработаны"
+			cat "$event_latest_volunteers" >> "$russia_latest_volunteers"
 		else  
 			echo "информации о волонетрах последнего "$parkrun" ("$last_date") еще нет!"
-			missing_volunteers=$missing_volunteers"\n"$parkrun
+			missing_volunteers=$missing_volunteers" "$parkrun
 		fi
 	fi
 
@@ -107,5 +105,5 @@ then
 	echo $missing_evetns
 	
 	echo "на дату "$last_date" нет информации о волонтерах для забегов:"
-	echo $missing_evetns
+	echo $missing_volunteers
 fi

@@ -33,7 +33,6 @@ futer=`echo $history_src | awk -F"<div id=\"FooterStats\">" '{print $2}' | awk -
 futer=${history_src#*<div id=\"FooterStats\">}
 futer=${futer%,<div class=\"column socialicons\">*}
 
-#total_events=`echo $futer | awk -F"<div class=\"column\">" '{print $2}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
 total_events=`echo $event_src | awk -F'Results-header\"><h1>' '{print $2}' | awk -F'<|>#' '{print $7}'`
 total_runners=`echo $futer | awk -F"<div class=\"column\">" '{print $3}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
 echo "Паркран "$parkrun". Всего забегов: "$total_events" Всего бегунов: "$total_runners
@@ -49,10 +48,11 @@ declare -A event2runners
 for(( i=2; i<=$event_count; ++i ))
 do
 	table_row=`echo $event_table | awk -F"<tr><td>" '{print $'"$i"'}'`
-	event_number=`echo $table_row | awk -F"</a>" '{print $1}' | awk -F">" '{print $2}'`
-	event_date=`echo $table_row | awk -F"</a>" '{print $2}' | awk -F">" '{print $4}' | awk -F"/" '{print $3$2$1}'`
-	event_runners=`echo $table_row | awk -F"</a>" '{print $3}' | awk -F"<td>" '{print $2}' | awk -F"</td>" '{print $1}'`
-	event_volunteers=`echo $table_row | awk -F"</a>" '{print $3}' | awk -F"<td>" '{print $3}' | awk -F"</td>" '{print $1}'`
+	
+	event_number=`echo $table_row | awk -F'<|>' '{print $3}'`
+	event_date=`echo $table_row | awk -F'<|>' '{print $11}' | awk -F'/' '{print $3$2$1}'`
+	event_runners=`echo $table_row | awk -F'<|>' '{print $17}'`
+	event_volunteers=`echo $table_row | awk -F'<|>' '{print $21}'`
 	
 	echo $parkrun" "$event_number" "$event_date" "$event_runners" "$event_volunteers
 	
@@ -91,7 +91,7 @@ do
 	do
 		runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
 		runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
-		runner_id=`echo $runner_raw | awk -F"?athleteNumber=" '{print $2}' | awk -F"\"" '{print $1}'`
+		runner_id=`echo $runner_raw | awk -F'?athleteNumber=|\" target=\"_top' '{print $2}'`
 		if [ -n "$runner_id" ]
 		then
 			runner_name=`echo $runner_raw | awk -F"target=\"_top\">" '{print $2}' | awk -F"</a>" '{print $1}'`
@@ -153,6 +153,6 @@ do
 		fi
 	done
 	
-	#sleep 1
+	sleep 1
 
 done
