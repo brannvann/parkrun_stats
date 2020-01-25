@@ -25,12 +25,16 @@ event_src=`curl -s -A "$user_agent" $result_page`
 
 #echo $history_src > $history_tmp
 #echo $event_src > $event_tmp
-
+#exit 0
 #event_src=`cat $event_tmp`
 #history_src=`cat $history_tmp`
 
 futer=`echo $history_src | awk -F"<div id=\"FooterStats\">" '{print $2}' | awk -F"<div class=\"column socialicons\">" '{print $1}'`
-total_events=`echo $futer | awk -F"<div class=\"column\">" '{print $2}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
+futer=${history_src#*<div id=\"FooterStats\">}
+futer=${futer%,<div class=\"column socialicons\">*}
+
+#total_events=`echo $futer | awk -F"<div class=\"column\">" '{print $2}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
+total_events=`echo $event_src | awk -F'Results-header\"><h1>' '{print $2}' | awk -F'<|>#' '{print $7}'`
 total_runners=`echo $futer | awk -F"<div class=\"column\">" '{print $3}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
 echo "Паркран "$parkrun". Всего забегов: "$total_events" Всего бегунов: "$total_runners
 
@@ -62,13 +66,13 @@ latest_result_file=$parkrun"_latest.txt"
 volunteer_file=$parkrun"_volunteers.txt"
 latest_volunteer_file=$parkrun"_latest_volunteers.txt"
 
-#for(( event_index=$total_events-3; event_index<=$total_events; event_index++ ))
+#for(( event_index=$total_events; event_index<=$total_events; event_index++ ))
 for(( event_index=1; event_index<=$total_events; event_index++ ))
 do
 	eventdate=${event2date[$event_index]}
-	if grep -q $eventdate $result_file; 
+	if grep -q "^$eventdate" $result_file; 
 	then
-		echo $parkrun" "$event_index" уже обработан" 
+		echo $parkrun" "$event_index" ("$eventdate") уже обработан" 
 		continue
 	fi
 	
@@ -83,11 +87,9 @@ do
 	event_src=`curl -s -A "$user_agent" $page_url`
 
 	eventrunners=${event2runners[$event_index]}
-	#echo $parkrun" "$event_index" "$eventdate" "$eventrunners" "$eventvolunteers
 	for(( runner=1;runner<=$eventrunners; runner++))
 	do
 		runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
-		#echo $runner_tag
 		runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
 		runner_id=`echo $runner_raw | awk -F"?athleteNumber=" '{print $2}' | awk -F"\"" '{print $1}'`
 		if [ -n "$runner_id" ]
@@ -138,16 +140,19 @@ do
 	do
 		Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         
 		athleteId=`echo $Volunteer | awk -F"Number=" '{print $2}' | awk -F"'>" '{print $1}'`
-		Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
-		output_text=$eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
-		echo -e $output_text
-		echo -e $output_text  >> "$volunteer_file"
-		if [ "$event_index" -eq "$total_events" ]
+		if [ -n "athleteId" ]
 		then
-			echo -e $output_text >> "$latest_volunteer_file"
+			Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
+			output_text=$eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
+			echo -e $output_text
+			echo -e $output_text  >> "$volunteer_file"
+			if [ "$event_index" -eq "$total_events" ]
+			then
+				echo -e $output_text >> "$latest_volunteer_file"
+			fi
 		fi
 	done
 	
-	sleep 1
+	#sleep 1
 
 done

@@ -1,7 +1,7 @@
 #!/bin/bash
 # результаты и статистика волонтеров на прошедших забегах parkrun russia
 
-events=( noginskgorodskoypark skverdzerzhinskogo angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpobedy
+events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpobedy
  bitsa butovo cheboksarynaberezhnaya chelyabinsk chelyabinskekopark chertanovopokrovskypark
  dolgoprudny druzhba ekaterinburgzelenayaroscha elaginostrov gatchinaprioratsky
  gorkypark izmailovo kazancentral khimki kimry kolchuginocitypark kolomenskoe
@@ -19,10 +19,11 @@ events=( noginskgorodskoypark skverdzerzhinskogo angarskieprudy babushkinskynaya
 )
 
 work_dir=$(dirname $0)
-
 result_dir='all_results'
+
+last_date=''
 if [[ -n "$1" ]]; then
-	result_dir="$1"
+	last_date="$1"
 fi
 
 if [[ ! -d "$result_dir" ]]; then
@@ -41,6 +42,9 @@ russia_latest_volunteers='_russia_latest_volunteers.txt'
 echo -n > "$russia_all_volunteers"
 echo -n > "$russia_latest_volunteers"
 
+missing_evetns=''
+missing_volunteers=''
+
 for parkrun in "${events[@]}";
 do
 	event_all_results=$parkrun"_results.txt"
@@ -48,13 +52,60 @@ do
 	event_all_volunteers=$parkrun"_volunteers.txt"
 	event_latest_volunteers=$parkrun"_latest_volunteers.txt"
 	
-	.${work_dir}/parkrun_results.sh "$parkrun"
+	is_last_results=0
+	is_last_volunteers=0
+	if [ -n "$last_date" ]
+	then
+		if grep -q "^$last_date" $event_latest_results; 
+		then
+			echo "результаты для "$parkrun" уже загружены"
+			let "is_last_results = 1"
+		fi
+		if grep -q "^$last_date" $event_latest_volunteers; 
+		then
+			echo "волонтеры для "$parkrun" уже загружены"
+			let "is_last_volunteers = 1"
+		fi
+	fi
+	#echo "is_last_results = "$is_last_results
+	#echo "is_last_volunteers = "$is_last_volunteers
+	
+	if [[ "0" == "$is_last_results" || 0 == "$is_last_volunteers" ]]; then
+		.${work_dir}/parkrun_results.sh "$parkrun"
+	fi
 	
 	cat "$event_all_results" >> "$russia_all_results"
-	cat "$event_latest_results" >> "$russia_latest_results"
 	cat "$event_all_volunteers" >> "$russia_all_volunteers"
+	cat "$event_latest_results" >> "$russia_latest_results"
 	cat "$event_latest_volunteers" >> "$russia_latest_volunteers"
 	
-	sleep 3
+	if [ -n "$last_date" ]	
+	then
+		#echo "проверка результатов на дату "$last_date
+		if grep -q "^$last_date" $event_latest_results; 
+		then
+			echo "последние результаты "$parkrun" ("$last_date") обработаны"
+		else  
+			echo "последних результатов "$parkrun" ("$last_date") еще нет!"
+			missing_evetns=$missing_evetns"\n"$parkrun
+		fi
+		if grep -q "^$last_date" $event_latest_volunteers; 
+		then
+			echo "волонтеры последнего забега "$parkrun" ("$last_date") обработаны"
+		else  
+			echo "информации о волонетрах последнего "$parkrun" ("$last_date") еще нет!"
+			missing_volunteers=$missing_volunteers"\n"$parkrun
+		fi
+	fi
+
+	sleep 1
 done
 
+if [ -n "$last_date" ]
+then
+	echo "на дату "$last_date" нет результатов для забегов:"
+	echo $missing_evetns
+	
+	echo "на дату "$last_date" нет информации о волонтерах для забегов:"
+	echo $missing_evetns
+fi
