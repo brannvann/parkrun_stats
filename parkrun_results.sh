@@ -70,88 +70,109 @@ latest_volunteer_file=$parkrun"_latest_volunteers.txt"
 for(( event_index=1; event_index<=$total_events; event_index++ ))
 do
 	eventdate=${event2date[$event_index]}
+	page_url=$result_page$event_index
+	is_event_src_loaded=0
+	
 	if grep -q "^$eventdate" $result_file; 
 	then
-		echo $parkrun" "$event_index" ("$eventdate") уже обработан" 
-		continue
-	fi
-	
-	if [ "$event_index" -eq "$total_events" ]
-	then
-		echo -n > "$latest_result_file"
-		echo -n > "$latest_volunteer_file"
-	fi
-
-	page_url=$result_page$event_index
-	echo "обработка " $page_url
-	event_src=`curl -s -A "$user_agent" $page_url`
-
-	eventrunners=${event2runners[$event_index]}
-	for(( runner=1;runner<=$eventrunners; runner++))
-	do
-		runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
-		runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
-		runner_id=`echo $runner_raw | awk -F'?athleteNumber=|\" target=\"_top' '{print $2}'`
-		if [ -n "$runner_id" ]
+		echo "результаты "$parkrun" "$event_index" ("$eventdate") уже обработаны" 
+		#continue
+	else
+		if [ "$event_index" -eq "$total_events" ]
 		then
-			runner_name=`echo $runner_raw | awk -F"target=\"_top\">" '{print $2}' | awk -F"</a>" '{print $1}'`
-			runner_time=`echo $runner_raw | awk -F"Results-table-td--time" '{print $2}' | awk -F">" '{print $3}' | awk -F"<" '{print $1}'`
-			gender=`echo $runner_raw | awk -F"gender Results-table-td--" '{print $2}' | awk -F"\"" '{print $1}'`
-			gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
-			age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
-			age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
-			record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
-			if [ -z "$record" ]
+			echo -n > "$latest_result_file"
+			#echo -n > "$latest_volunteer_file"
+		fi
+
+		echo "обработка " $page_url
+		event_src=`curl -s -A "$user_agent" $page_url`
+		is_event_src_loaded=1
+
+		eventrunners=${event2runners[$event_index]}
+		for(( runner=1;runner<=$eventrunners; runner++))
+		do
+			runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
+			runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
+			runner_id=`echo $runner_raw | awk -F'?athleteNumber=|\" target=\"_top' '{print $2}'`
+			if [ -n "$runner_id" ]
 			then
-				record=`echo $runner_raw | grep "Первый забег!</span>"`
-				if [ -n "$record" ]
+				runner_name=`echo $runner_raw | awk -F"target=\"_top\">" '{print $2}' | awk -F"</a>" '{print $1}'`
+				runner_time=`echo $runner_raw | awk -F"Results-table-td--time" '{print $2}' | awk -F">" '{print $3}' | awk -F"<" '{print $1}'`
+				gender=`echo $runner_raw | awk -F"gender Results-table-td--" '{print $2}' | awk -F"\"" '{print $1}'`
+				gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
+				age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
+				age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
+				record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
+				if [ -z "$record" ]
 				then
-					record="Первый забег!"
-				else 
-					record=`echo $runner_raw | grep "Новый ЛР!</span>"`
+					record=`echo $runner_raw | grep "Первый забег!</span>"`
 					if [ -n "$record" ]
 					then
-						record="Новый ЛР!"
+						record="Первый забег!"
+					else 
+						record=`echo $runner_raw | grep "Новый ЛР!</span>"`
+						if [ -n "$record" ]
+						then
+							record="Новый ЛР!"
+						fi
 					fi
 				fi
+				runs_count=`echo $runner_raw | awk -F"<span class=\"Results-tablet" '{print $1}' | awk -F">" '{print $NF}' | awk -F" " '{print $1}'`
+				
+				output_text=$eventdate"\t"$parkrun"\t"$event_index
+				output_text=$output_text"\t"$runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos
+				output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
+				echo -e $output_text
+				echo -e $output_text >> "$result_file"
+				if [ "$event_index" -eq "$total_events" ]
+				then
+					echo -e $output_text >> "$latest_result_file"
+				fi
+			else
+				echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ"
+				echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ" >> "$result_file"
+				if [ "$event_index" -eq "$total_events" ]
+				then
+					echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ" >> "$latest_result_file"
+				fi
 			fi
-			runs_count=`echo $runner_raw | awk -F"<span class=\"Results-tablet" '{print $1}' | awk -F">" '{print $NF}' | awk -F" " '{print $1}'`
-			
-			output_text=$eventdate"\t"$parkrun"\t"$event_index
-			output_text=$output_text"\t"$runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos
-			output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
-			echo -e $output_text
-			echo -e $output_text >> "$result_file"
-			if [ "$event_index" -eq "$total_events" ]
-			then
-				echo -e $output_text >> "$latest_result_file"
-			fi
-		else
-			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ"
-			echo -e $eventdate"\t"$parkrun"\t"$event_index"\t"$runner"\tНЕИЗВЕСТНЫЙ" >> "$result_file"
-		fi
-		
-	done 
+		done
+	fi 
 	
-	volunteer_block=`echo $event_src | awk -F"../../volunteer" '{ print $1}' | awk -F"</h3>" '{print $NF}' | awk -F":" '{print $2}'`
-	#echo $volunteer_block
-	eventvolunteers=${event_volunteers[$event_index]}
-	for(( v=1; v<=$eventvolunteers; v++ ))
-	do
-		Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         
-		athleteId=`echo $Volunteer | awk -F"Number=" '{print $2}' | awk -F"'>" '{print $1}'`
-		if [ -n "athleteId" ]
-		then
-			Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
-			output_text=$eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
-			echo -e $output_text
-			echo -e $output_text  >> "$volunteer_file"
-			if [ "$event_index" -eq "$total_events" ]
-			then
-				echo -e $output_text >> "$latest_volunteer_file"
-			fi
+	if grep -q "^$eventdate" $volunteer_file; 
+	then
+		echo "волонтеры "$parkrun" "$event_index" ("$eventdate") уже обработаны" 
+	else
+		if [[ "0" == "$is_event_src_loaded" ]]; then
+			echo "обработка " $page_url
+			event_src=`curl -s -A "$user_agent" $page_url`
 		fi
-	done
+	
+		if [ "$event_index" -eq "$total_events" ]
+		then
+			echo -n > "$latest_volunteer_file"
+		fi
+	
+		volunteer_block=`echo $event_src | awk -F"../../volunteer" '{ print $1}' | awk -F"</h3>" '{print $NF}' | awk -F":" '{print $2}'`
+		#echo $volunteer_block
+		eventvolunteers=${event_volunteers[$event_index]}
+		for(( v=1; v<=$eventvolunteers; v++ ))
+		do
+			Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         
+			athleteId=`echo $Volunteer | awk -F"Number=" '{print $2}' | awk -F"'>" '{print $1}'`
+			if [ -n "$athleteId" ]
+			then
+				Name=`echo $Volunteer | awk -F">" '{print $2}' | awk -F"<" '{print $1}'`
+				output_text=$eventdate"\t"$parkrun"\t"$event_index"\tA"$athleteId"\t"$Name
+				echo -e $output_text
+				echo -e $output_text  >> "$volunteer_file"
+				if [ "$event_index" -eq "$total_events" ]
+				then
+					echo -e $output_text >> "$latest_volunteer_file"
+				fi
+			fi
+		done
+	fi
 	
 	sleep 1
 
