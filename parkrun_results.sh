@@ -15,6 +15,13 @@ if [[ -n "$1" ]]; then
 	parkrun=$1
 fi
 
+last_date=''
+if [[ -n "$2" ]]; then
+	last_date=$2
+fi
+
+echo "Обработка забега "$parkrun" на дату "$last_date
+
 history_page='https://www.parkrun.ru/'$parkrun'/results/eventhistory/'
 result_page='https://www.parkrun.ru/'$parkrun'/results/weeklyresults/?runSeqNumber='
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
@@ -35,7 +42,15 @@ futer=${futer%,<div class=\"column socialicons\">*}
 
 total_events=`echo $event_src | awk -F'Results-header\"><h1>' '{print $2}' | awk -F'<|>#' '{print $7}'`
 total_runners=`echo $futer | awk -F"<div class=\"column\">" '{print $3}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
-echo "Паркран "$parkrun". Всего забегов: "$total_events" Всего бегунов: "$total_runners
+last_event_date=`echo $event_src | awk -F'Results-header\"><h1>' '{print $2}' | awk -F'<|>' '{print $5}' | awk -F'/' '{print $3$2$1}' `
+echo "Паркран "$parkrun". Всего забегов: "$total_events" Всего бегунов: "$total_runners" дата последнего забега: "$last_event_date
+
+if [[ -n "$last_date" ]]; then
+	if [[ "$last_date" != "$last_event_date" ]]; then
+		echo "Результатов на дату "$last_date" еще нет"
+		exit 0
+	fi
+fi
 
 event_table=`echo $history_src | awk -F"<div id=\"primary\">" '{print $2}' | awk -F"<tbody>" '{print $2}' | awk -F"</tbody>" '{print $1}'`
 event_count=`echo $event_table | awk -F"<tr><td>" '{print NF}'`
@@ -43,7 +58,12 @@ event_count=`echo $event_table | awk -F"<tr><td>" '{print NF}'`
 
 declare -A event2date
 declare -A event2runners
-declare -A event2runners
+declare -A event2volunteers
+
+#если обрабатываем только последние результаты, то читаем только верхнюю строчку таблицы, т.е. последний забег
+if [[ -n "$last_date" ]]; then
+	event_count=2
+fi
 
 for(( i=2; i<=$event_count; ++i ))
 do
@@ -58,7 +78,7 @@ do
 	
 	event2date[$event_number]=$event_date
 	event2runners[$event_number]=$event_runners
-	event_volunteers[$event_number]=$event_volunteers
+	event2volunteers[$event_number]=$event_volunteers
 done
 
 result_file=$parkrun"_results.txt"
@@ -66,8 +86,12 @@ latest_result_file=$parkrun"_latest.txt"
 volunteer_file=$parkrun"_volunteers.txt"
 latest_volunteer_file=$parkrun"_latest_volunteers.txt"
 
-#for(( event_index=$total_events; event_index<=$total_events; event_index++ ))
-for(( event_index=1; event_index<=$total_events; event_index++ ))
+first_event=1
+#если обрабатываем только последние результаты, то загружаем только последний забег
+if [[ -n "$last_date" ]]; then
+	first_event=$total_events
+fi
+for(( event_index=$first_event; event_index<=$total_events; event_index++ ))
 do
 	eventdate=${event2date[$event_index]}
 	page_url=$result_page$event_index
@@ -155,7 +179,7 @@ do
 	
 		volunteer_block=`echo $event_src | awk -F"../../volunteer" '{ print $1}' | awk -F"</h3>" '{print $NF}' | awk -F":" '{print $2}'`
 		#echo $volunteer_block
-		eventvolunteers=${event_volunteers[$event_index]}
+		eventvolunteers=${event2volunteers[$event_index]}
 		for(( v=1; v<=$eventvolunteers; v++ ))
 		do
 			Volunteer=`echo $volunteer_block | awk -F"</a>," '{print $'"$v"'}'`         

@@ -75,7 +75,7 @@ do
 	fi
 	
 	if [[ "0" == "$is_last_results" || "0" == "$is_last_volunteers" ]]; then
-		.${work_dir}/parkrun_results.sh "$parkrun"
+		.${work_dir}/parkrun_results.sh "$parkrun" "$last_date"
 	fi
 	
 	cat "$event_all_results" >> "$russia_all_results"
