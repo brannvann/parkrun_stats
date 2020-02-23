@@ -16,11 +16,13 @@ if [[ -n "$1" ]]; then
 fi
 
 last_date=''
+date_str=''
 if [[ -n "$2" ]]; then
 	last_date=$2
+	date_str="на дату "$last_date
 fi
 
-echo "Обработка забега "$parkrun" на дату "$last_date
+echo "Обработка забега "$parkrun" "$date_str
 
 history_page='https://www.parkrun.ru/'$parkrun'/results/eventhistory/'
 result_page='https://www.parkrun.ru/'$parkrun'/results/weeklyresults/?runSeqNumber='
@@ -110,7 +112,7 @@ do
 
 		echo "обработка " $page_url
 		event_src=`curl -s -A "$user_agent" $page_url`
-		is_event_src_loaded=1
+		is_event_src_loaded=1	
 
 		eventrunners=${event2runners[$event_index]}
 		for(( runner=1;runner<=$eventrunners; runner++))
@@ -142,10 +144,13 @@ do
 					fi
 				fi
 				runs_count=`echo $runner_raw | awk -F"<span class=\"Results-tablet" '{print $1}' | awk -F">" '{print $NF}' | awk -F" " '{print $1}'`
+				#runs_count="$(echo -e "${runs_count}" | tr -d '[:space:]')"
 				
 				output_text=$eventdate"\t"$parkrun"\t"$event_index
 				output_text=$output_text"\t"$runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos
 				output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
+				
+				
 				echo -e $output_text
 				echo -e $output_text >> "$result_file"
 				if [ "$event_index" -eq "$total_events" ]
@@ -197,7 +202,33 @@ do
 			fi
 		done
 	fi
-	
+
 	sleep 1
 
+done
+
+#корректировка таблицы результатов. 
+temp_file="_processed_results.txt"
+for(( i=0; i<=9; i++ ))
+do
+	# удаление лишних пробелов в конце полей с количеством забегов
+	sed 's/'"$i"' /'"$i"'/' "$result_file" > "$temp_file"
+	cat "$temp_file" > "$result_file"
+	sed 's/'"$i"' /'"$i"'/' "$latest_result_file" > "$temp_file"
+	cat "$temp_file" > "$latest_result_file"
+		
+	# преобразование 1:0X:XX в 6X:XX, 1:1X:XX в 7Х:ХХ, 1:2Х:ХХ в 8Х:ХХ
+	sed 's/1:0'"$i"':/6'"$i"':/' "$result_file" > "$temp_file"
+	cat "$temp_file" > "$result_file"
+	sed 's/1:1'"$i"':/7'"$i"':/' "$result_file" > "$temp_file"
+	cat "$temp_file" > "$result_file"
+	sed 's/1:2'"$i"':/8'"$i"':/' "$result_file" > "$temp_file"
+	cat "$temp_file" > "$result_file"
+	
+	sed 's/1:0'"$i"':/6'"$i"':/' "$latest_result_file" > "$temp_file"
+	cat "$temp_file" > "$latest_result_file"
+	sed 's/1:1'"$i"':/7'"$i"':/' "$latest_result_file" > "$temp_file"
+	cat "$temp_file" > "$latest_result_file"
+	sed 's/1:2'"$i"':/8'"$i"':/' "$latest_result_file" > "$temp_file"
+	cat "$temp_file" > "$latest_result_file"
 done
