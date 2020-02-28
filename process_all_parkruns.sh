@@ -26,6 +26,7 @@ no_events=()
 
 if [[ -n "$1" ]]; then
 	last_date="$1"
+	result_dir="results_"$last_date
 else
 	#архивные паркраны
 	events=("${events[@]}" "ekaterinburgzelenayaroscha")
