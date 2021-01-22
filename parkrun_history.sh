@@ -22,7 +22,7 @@ event_count=`echo $event_table | awk -F"<tr[^>]*?><td[^>]*?>" '{print NF}'`
 result_file=$parkrun"_history.txt"
 echo -n > "$result_file"
 
-for(( i=2; i<=$event_count; ++i ))
+for(( i=2; i<=event_count; ++i ))
 do
 	table_row=`echo $event_table | awk -F"<tr class=\"Results-table-row\" " '{print $'"$i"'}'`
 

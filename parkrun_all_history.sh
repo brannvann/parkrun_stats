@@ -15,7 +15,7 @@ if [[ ! -f parkruns_russia.txt ]]; then
 fi
 
 _start=1
-_stop=$(cat parkruns_russia.txt | wc -l)
+_stop=$(wc -l < parkruns_russia.txt)
 
 history_dir='all_history'
 
@@ -29,10 +29,9 @@ russia_all_history='_russia_all_history.txt'
 echo -n > "$russia_all_history"	
 
 while read parkrun; do
-  ProgressBar $_start $_stop
-	_start=$((_start + 1))
+  ProgressBar $((_start++)) $_stop
 	event_history=$parkrun"_history.txt"
   ../parkrun_history.sh "$parkrun"
-	cat "$event_history" >> "$russia_all_history"
+  cat "$event_history" >> "$russia_all_history"
 done < ../parkruns_russia.txt
 echo ""

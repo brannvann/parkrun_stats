@@ -30,8 +30,8 @@ total=$(curl -s -A "$user_agent" $result_page | awk -F'Мероприятий: <
 echo "Паркран "$parkrun". Всего забегов: "$total
 
 # сюда сохраняются все страницы с результатами забега  (korolev_all_results.html) 
-totalresult=$parkrun'_all_results.html'
-echo -n > $totalresult
+#totalresult=$parkrun'_all_results.html'
+#echo -n > $totalresult
 
 # подробная статистика волонтеров по забегу
 full_stat=$parkrun'_full_stat.txt'
@@ -66,7 +66,7 @@ done
 echo ""
 
 # вывод списка волонтеров с сортировкой по количеству забегов
-echo "================== Волонтеры забега "$parkrun" =================="
+echo "===================== Волонтеры забега "$parkrun" ========================"
 for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4
 
 # вывод списка волонтеров в файл
