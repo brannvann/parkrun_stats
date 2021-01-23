@@ -52,8 +52,9 @@ if [[ -f $full_stat && -f $volunteers_file ]]; then
   done < $volunteers_file
 else
   # если файлов нет, вся статистика будет скачана заново
-  echo -n > $full_stat
   start_index=1
+  echo -n > $full_stat
+  echo -n > $volunteers_file
 fi
 
 for(( event_index=start_index; event_index<=total; event_index++ ))
