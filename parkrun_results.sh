@@ -9,6 +9,8 @@
 
 history_tmp='history_src_tmp'
 event_tmp='event_src_tmp'
+footer_tmp='history_footer_tmp'
+table_tmp='table_tmp'
 
 parkrun='korolev'
 if [[ -n "$1" ]]; then
@@ -38,13 +40,13 @@ event_src=`curl -s -A "$user_agent" $result_page`
 #event_src=`cat $event_tmp`
 #history_src=`cat $history_tmp`
 
-futer=`echo $history_src | awk -F"<div id=\"FooterStats\">" '{print $2}' | awk -F"<div class=\"column socialicons\">" '{print $1}'`
-futer=${history_src#*<div id=\"FooterStats\">}
-futer=${futer%,<div class=\"column socialicons\">*}
+futer=${history_src#*<div id=\"footerStats\">}
+futer=${futer%,<div class=\"footerSocialLogo\">*}
+#echo $futer > $footer_tmp
 
-total_events=`echo $event_src | awk -F'Results-header\"><h1>' '{print $2}' | awk -F'<|>#' '{print $7}'`
-total_runners=`echo $futer | awk -F"<div class=\"column\">" '{print $3}' | awk -F": " '{print $2}' | awk -F"</div>" '{print $1}'`
-last_event_date=`echo $event_src | awk -F'Results-header\"><h1>' '{print $2}' | awk -F'<|>' '{print $5}' | awk -F'/' '{print $3$2$1}' `
+total_events=`echo $futer | awk -F'<span class=\"num\">' '{print $2}' | awk -F'<' '{print $1}'`
+total_runners=`echo $futer | awk -F'<span class=\"num\">' '{print $3}' | awk -F'<' '{print $1}'`
+last_event_date=`echo $event_src | awk -F'<span class=\"format-date\">' '{print $2}' | awk -F'<' '{print $1}' | awk -F'/' '{print $3$2$1}' `
 echo "Паркран "$parkrun". Всего забегов: "$total_events" Всего бегунов: "$total_runners" дата последнего забега: "$last_event_date
 
 if [[ -n "$last_date" ]]; then
@@ -54,8 +56,8 @@ if [[ -n "$last_date" ]]; then
 	fi
 fi
 
-event_table=`echo $history_src | awk -F"<div id=\"primary\">" '{print $2}' | awk -F"<tbody>" '{print $2}' | awk -F"</tbody>" '{print $1}'`
-event_count=`echo $event_table | awk -F"<tr><td>" '{print NF}'`
+event_table=`echo $history_src | awk -F'ResultsTbody\">' '{print $2}' | awk -F'</tbody></table>' '{print $1}'`
+event_count=`echo $event_table | awk -F'<tr class=\"Results-table-row\"' '{print NF}'`
 #echo "Забегов в таблице истории "$event_count
 
 declare -A event2date
@@ -69,12 +71,12 @@ fi
 
 for(( i=2; i<=$event_count; ++i ))
 do
-	table_row=`echo $event_table | awk -F"<tr><td>" '{print $'"$i"'}'`
+	table_row=`echo $event_table | awk -F'<tr class=\"Results-table-row\"' '{print $'"$i"'}'`
 	
-	event_number=`echo $table_row | awk -F'<|>' '{print $3}'`
-	event_date=`echo $table_row | awk -F'<|>' '{print $11}' | awk -F'/' '{print $3$2$1}'`
-	event_runners=`echo $table_row | awk -F'<|>' '{print $17}'`
-	event_volunteers=`echo $table_row | awk -F'<|>' '{print $21}'`
+	event_number=`echo $table_row | awk -F'data-parkrun=\"' '{print $2}' | awk -F'\"' '{print $1}'`
+	event_date=`echo $table_row | awk -F'data-date=\"' '{print $2}' | awk -F'\"' '{print $1}'  | awk -F'/' '{print $3$2$1}'`
+	event_runners=`echo $table_row | awk -F'data-finishers=\"' '{print $2}' | awk -F'\"' '{print $1}'`
+	event_volunteers=`echo $table_row | awk -F'data-volunteers=\"' '{print $2}' | awk -F'\"' '{print $1}'`
 	
 	echo $parkrun" "$event_number" "$event_date" "$event_runners" "$event_volunteers
 	
@@ -128,7 +130,7 @@ do
 				gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
 				age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
 				age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
-				record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
+				record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
 				if [ -z "$record" ]
 				then
 					record=`echo $runner_raw | grep "Первый забег!</span>"`
@@ -212,9 +214,9 @@ temp_file="_processed_results.txt"
 for(( i=0; i<=9; i++ ))
 do
 	# удаление лишних пробелов в конце полей с количеством забегов
-	sed 's/'"$i"' /'"$i"'/' "$result_file" > "$temp_file"
+	sed 's/'"$i"' /'"$i"'/' "$result_file" > "$temp_file"
 	cat "$temp_file" > "$result_file"
-	sed 's/'"$i"' /'"$i"'/' "$latest_result_file" > "$temp_file"
+	sed 's/'"$i"' /'"$i"'/' "$latest_result_file" > "$temp_file"
 	cat "$temp_file" > "$latest_result_file"
 		
 	# преобразование 1:0X:XX в 6X:XX, 1:1X:XX в 7Х:ХХ, 1:2Х:ХХ в 8Х:ХХ
