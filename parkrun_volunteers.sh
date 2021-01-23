@@ -25,7 +25,10 @@ declare -A countMap
 
 result_page='https://www.parkrun.ru/'$parkrun'/results/weeklyresults/?runSeqNumber='
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
-total=$(curl -s -A "$user_agent" $result_page | awk -F'Мероприятий: <span class="num">' '{print $2}' | awk -F'</span>' '{print $1}' | tr -d '\n')
+total=$(curl -s -A "$user_agent" $result_page |
+        awk -F'Мероприятий: <span class="num">' '{print $2}' |
+        awk -F'</span>' '{print $1}' |
+        tr -d '\n')
 
 echo "Паркран "$parkrun". Всего забегов: "$total
 
@@ -33,11 +36,27 @@ echo "Паркран "$parkrun". Всего забегов: "$total
 #totalresult=$parkrun'_all_results.html'
 #echo -n > $totalresult
 
-# подробная статистика волонтеров по забегу
+# подробная статистика волонтеров по забегу хранится в файлах:
 full_stat=$parkrun'_full_stat.txt'
-echo -n > $full_stat
+volunteers_file='volunteers_'$parkrun'.txt'
+# ------------------------------------------------------------
 
-for(( event_index=1; event_index<=total; event_index++ ))
+if [[ -f $full_stat && -f $volunteers_file ]]; then
+  # если файлы есть, статистика будет дописана и обновлена
+  start_index=$(tail -1 < $full_stat | cut -f2)
+  ((++start_index))
+  while read line; do
+    key=$(echo "$line" | awk -F' [1-9]' '{print $1}')
+    value=$(echo "$line" | sed -e 's/^.* \([0-9]\+\)$/\1/')
+    countMap[$key]=$value
+  done < $volunteers_file
+else
+  # если файлов нет, вся статистика будет скачана заново
+  echo -n > $full_stat
+  start_index=1
+fi
+
+for(( event_index=start_index; event_index<=total; event_index++ ))
 do
   ProgressBar $event_index $total
 	# скачиваем содержимое страницы с результатами забега 
@@ -58,8 +77,7 @@ do
 		echo -e $parkrun"\t"$event_index"\t"$key >> $full_stat
 
 		value=${countMap[$key]}
-		value=$((value + 1))
-		countMap[$key]=$value
+		countMap[$key]=$((++value))
 	done	
 	sleep 0.2
 done
@@ -70,5 +88,4 @@ echo "===================== Волонтеры забега "$parkrun" =========
 for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4
 
 # вывод списка волонтеров в файл
-volunteers_file='volunteers_'$parkrun'.txt'
 for K in "${!countMap[@]}"; do echo $K ${countMap[$K]}; done | sort -rn -k4 >> $volunteers_file
