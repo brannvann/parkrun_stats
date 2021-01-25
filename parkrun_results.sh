@@ -130,7 +130,7 @@ do
 				gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
 				age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
 				age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
-				record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
+				record=`echo $runner_raw | awk -F">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
 				if [ -z "$record" ]
 				then
 					record=`echo $runner_raw | grep "Первый забег!</span>"`
