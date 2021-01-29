@@ -130,10 +130,10 @@ do
 				gender_pos=`echo $runner_raw | awk -F"<span class=\"Results-table--genderCount\"" '{print $1}' | awk -F">" '{print $NF}'`
 				age_group=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F"<" '{print $1}' | awk -F">" '{print $2}'`
 				age_grade=`echo $runner_raw | awk -F"ageCat=" '{print $2}' | awk -F">" '{print $5}' | awk -F"<" '{print $1}'`
-				record=`echo $runner_raw | awk -F"<span class=\"Results-table--normal\">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
+				record=`echo $runner_raw | awk -F">ЛР</span> " '{print $2}' | awk -F"<" '{print $1}'`
 				if [ -z "$record" ]
 				then
-					record=`echo $runner_raw | grep "Первый забег!</span>"`
+					record=`echo $runner_raw | grep "Первый паркран!</span>"`
 					if [ -n "$record" ]
 					then
 						record="Первый забег!"
@@ -214,9 +214,9 @@ temp_file="_processed_results.txt"
 for(( i=0; i<=9; i++ ))
 do
 	# удаление лишних пробелов в конце полей с количеством забегов
-	sed 's/'"$i"' /'"$i"'/' "$result_file" > "$temp_file"
+	sed 's/'"$i"' /'"$i"'/' "$result_file" > "$temp_file"
 	cat "$temp_file" > "$result_file"
-	sed 's/'"$i"' /'"$i"'/' "$latest_result_file" > "$temp_file"
+	sed 's/'"$i"' /'"$i"'/' "$latest_result_file" > "$temp_file"
 	cat "$temp_file" > "$latest_result_file"
 		
 	# преобразование 1:0X:XX в 6X:XX, 1:1X:XX в 7Х:ХХ, 1:2Х:ХХ в 8Х:ХХ
