@@ -101,7 +101,7 @@ do
 	page_url=$result_page$event_index
 	is_event_src_loaded=0
 	
-	if grep -q "^$eventdate" $result_file; 
+	if grep -q -s "^$eventdate" $result_file; 
 	then
 		echo "результаты "$parkrun" "$event_index" ("$eventdate") уже обработаны" 
 		#continue
@@ -119,8 +119,15 @@ do
 		eventrunners=${event2runners[$event_index]}
 		for(( runner=1;runner<=$eventrunners; runner++))
 		do
-			runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
-			runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
+			#runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
+			runner_tag='>'$runner'</td><td class='
+			
+			runner_raw=`echo $event_src | tr -d '\n' | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
+			
+			#echo "tag:   "  "$runner_tag"
+			#echo "raw:   "  "$runner_raw"
+			#exit
+			
 			runner_id=`echo $runner_raw | awk -F'?athleteNumber=|\" target=\"_top' '{print $2}'`
 			if [ -n "$runner_id" ]
 			then
@@ -170,7 +177,7 @@ do
 		done
 	fi 
 	
-	if grep -q "^$eventdate" $volunteer_file; 
+	if grep -q -s "^$eventdate" $volunteer_file; 
 	then
 		echo "волонтеры "$parkrun" "$event_index" ("$eventdate") уже обработаны" 
 	else
