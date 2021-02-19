@@ -1,22 +1,15 @@
 #!/bin/bash
 # результаты и статистика волонтеров на прошедших забегах parkrun russia
 
-events=( angarskieprudy babushkinskynayauze balashikhazarechnaya belgorodparkpobedy
-  cheboksarynaberezhnaya chelyabinsk chelyabinskekopark chertanovopokrovskypark
- dolgoprudny druzhba elaginostrov gatchinaprioratsky
- gorkypark izmailovo kazancentral khimki kimry kolchuginocitypark kolomenskoe
- kolpino korolev krasnoyarsknaberezhnaya krylatskoe 
- kuzminki megaparkkudrovo meshchersky mitino moskovskyparkpobedy natashinsky
- nizhnynovgorodmeshchersky novosibirsknaberezhnaya obninsk olimpiyskayaderevnya
- orskparkstroiteley parkguskova pavlovskyposad permbalatovo petergofaleksandriysky 
- pokrovskoestreshnevo pushkin readovskypark rostovondon ryazancentral ryazanoreshek 
- samaraparkgagarina serpukhovgorodskoybor severnoetushino 
- shuvalovskypark sokolniki sosnovka stavropol tambov timiryazevsky tsaritsyno 
- tulacentral ufabotanicheskysad velikiynovgorodkremlevsky vernadskogo volgogradpanorama
- voronezhcentralpark yakutskdokhsun zatyumensky zelenograd zhukovsky
- kurgancentralpark staryesady tomskstadionpolytechnic lesoparkseverny solnechnyostrov
- skverdzerzhinskogo noginskgorodskoypark bitsa butovo plotinka
-)
+if [[ ! -f parkruns_russia.txt ]]; then
+  ./all_parkruns.sh
+fi
+
+declare -a events
+
+while read parkrun; do
+	events+=( $parkrun )
+done < ./parkruns_russia.txt
 
 work_dir=$(dirname $0)
 result_dir='all_results'
@@ -29,8 +22,7 @@ if [[ -n "$1" ]]; then
 	result_dir="results_"$last_date
 else
 	#архивные паркраны
-	events=("${events[@]}" "ekaterinburgzelenayaroscha")
-	events=("${events[@]}" "severnyrechnoyvokzal")
+	events+=( "ekaterinburgzelenayaroscha" "severnyrechnoyvokzal" )
 fi
 
 if [[ ! -d "$result_dir" ]]; then
