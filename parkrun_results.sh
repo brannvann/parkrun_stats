@@ -101,7 +101,7 @@ do
 	page_url=$result_page$event_index
 	is_event_src_loaded=0
 	
-	if grep -q "^$eventdate" $result_file; 
+	if grep -q -s "^$eventdate" $result_file; 
 	then
 		echo "результаты "$parkrun" "$event_index" ("$eventdate") уже обработаны" 
 		#continue
@@ -120,7 +120,7 @@ do
 		for(( runner=1;runner<=$eventrunners; runner++))
 		do
 			runner_tag='<td class="Results-table-td Results-table-td--position">'$runner
-			runner_raw=`echo $event_src | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
+			runner_raw=`echo $event_src | tr -d '\n' | awk -F"$runner_tag" '{print $2}' | awk -F"</tr>" '{print $1}' `
 			runner_id=`echo $runner_raw | awk -F'?athleteNumber=|\" target=\"_top' '{print $2}'`
 			if [ -n "$runner_id" ]
 			then
@@ -146,12 +146,10 @@ do
 					fi
 				fi
 				runs_count=`echo $runner_raw | awk -F"<span class=\"Results-tablet" '{print $1}' | awk -F">" '{print $NF}' | awk -F" " '{print $1}'`
-				#runs_count="$(echo -e "${runs_count}" | tr -d '[:space:]')"
 				
 				output_text=$eventdate"\t"$parkrun"\t"$event_index
 				output_text=$output_text"\t"$runner"\tA"$runner_id"\t"$runner_name"\t"$runner_time"\t"$gender"\t"$gender_pos
 				output_text=$output_text"\t"$age_group"\t"$age_grade"\t"$record"\t"$runs_count
-				
 				
 				echo -e $output_text
 				echo -e $output_text >> "$result_file"
@@ -170,7 +168,7 @@ do
 		done
 	fi 
 	
-	if grep -q "^$eventdate" $volunteer_file; 
+	if grep -q -s "^$eventdate" $volunteer_file; 
 	then
 		echo "волонтеры "$parkrun" "$event_index" ("$eventdate") уже обработаны" 
 	else
