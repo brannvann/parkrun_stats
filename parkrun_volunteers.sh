@@ -47,7 +47,7 @@ if [[ -f $full_stat && -f $volunteers_file ]]; then
   ((++start_index))
   while read line; do
     key=$(echo "$line" | awk -F' [1-9]' '{print $1}')
-    value=$(echo "$line" | sed -e 's/^.* \([0-9]\+\)$/\1/')
+    value=$(echo "$line" | awk '{print $NF}')
     countMap[$key]=$value
   done < $volunteers_file
 else

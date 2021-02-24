@@ -12,5 +12,5 @@ parkruns_russia=$(echo "$courses_src" |
                   awk -F'</tbody>' '{print $1}' |
                   sed 's/\/results">/\n/g' |
                   awk -F'<tr><td><a href="https://www.parkrun.ru/' '{print $2}')
-echo "Number of parkruns in Russia: ""$(wc -l "$parkruns_russia")"
+echo "Number of parkruns in Russia: "$(echo "$parkruns_russia" | wc -l)
 echo "$parkruns_russia" > parkruns_russia.txt

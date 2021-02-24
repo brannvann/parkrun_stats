@@ -14,10 +14,13 @@ fi
 
 history_page='https://www.parkrun.ru/'$parkrun'/results/eventhistory/'
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
-history_src=`curl -s -A "$user_agent" $history_page`
+history_src=$(curl -s -A "$user_agent" $history_page)
 
-event_table=`echo $history_src | awk -F"<div id=\"primary\">" '{print $2}' | awk -F"<tbody[^>]*?>" '{print $2}' | awk -F"</tbody>" '{print $1}'`
-event_count=`echo $event_table | awk -F"<tr[^>]*?><td[^>]*?>" '{print NF}'`
+event_table=$(echo $history_src | 
+			  awk -F"<div id=\"primary\">" '{print $2}' | 
+			  awk -F"<tbody[^>]*?>" '{print $2}' | 
+			  awk -F"</tbody>" '{print $1}')
+event_count=$(echo $event_table | awk -F"<tr[^>]*?><td[^>]*?>" '{print NF}')
 
 result_file=$parkrun"_history.txt"
 echo -n > "$result_file"

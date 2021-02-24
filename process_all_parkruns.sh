@@ -5,11 +5,7 @@ if [[ ! -f parkruns_russia.txt ]]; then
   ./all_parkruns.sh
 fi
 
-declare -a events
-
-while read parkrun; do
-	events+=( $parkrun )
-done < ./parkruns_russia.txt
+mapfile -t events < <(cat ./parkruns_russia.txt)
 
 work_dir=$(dirname $0)
 result_dir='all_results'
