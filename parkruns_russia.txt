@@ -12,6 +12,8 @@ chertanovopokrovskypark
 dolgoprudny
 druzhba
 elaginostrov
+filatovlug
+fili
 gatchinaprioratsky
 gorkypark
 gorodskoyparksemya
@@ -30,10 +32,13 @@ krylatskoe
 kurgancentralpark
 kuzminki
 lesoparkseverny
+lobnyagorodskoypark
+maykopgorodskoypark
 megaparkkudrovo
 meshchersky
 mitino
 moskovskyparkpobedy
+mytishchicentralpark
 natashinsky
 nizhnynovgorodmeshchersky
 noginskgorodskoypark
@@ -43,12 +48,14 @@ olimpiyskayaderevnya
 orskparkstroiteley
 parkguskova
 parkkirova
+parktalalikhina
 pavlovskyposad
 permbalatovo
 petergofaleksandriysky
 plotinka
 pokrovskoestreshnevo
 pushkin
+ramenskoegorodskoypark
 readovskypark
 rostovondon
 ryazancentral
@@ -77,6 +84,7 @@ vernadskogo
 volgogradpanorama
 voronezhcentralpark
 yakutskdokhsun
+yarmarochnayaploshchad
 yoshkarolaalleyazdorovya
 zatyumensky
 zelenograd
